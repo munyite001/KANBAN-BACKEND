@@ -28,3 +28,33 @@ exports.user_registration = asyncHandler(async (req, res) => {
 
     res.status(201).json({ message: 'User created successfully' });
 })
+
+
+//  User Login
+exports.user_login = asyncHandler(async (req, res) => {
+    const {email, password} = req.body;
+
+    //  Check if a user with that email exists
+    const user = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+
+    if (!user.rows[0]) {
+        res.status(401).json({message: "User with that Email Not Found"})
+    }
+
+    //  Check if the password is correct
+    const match = bcrypt.compareSync(password, user.rows[0].passwordhash);
+
+    if (!match) {
+        res.status(402).json({message: "Invalid Password"})
+    }
+
+    //  Otherwise if all is good
+    const token = jwt.sign({id: user.rows[0].id}, process.env.JWT_SECRET, {expiresIn: '1d'});
+
+    res.json({
+        id: user.rows[0].id,
+        username: user.rows[0].username,
+        email: user.rows[0].email,
+        token
+    });
+});
