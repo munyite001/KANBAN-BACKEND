@@ -58,3 +58,23 @@ exports.user_login = asyncHandler(async (req, res) => {
         token
     });
 });
+
+
+//  Get User Details by deciphering the token
+exports.get_user = asyncHandler(async (req, res) => {
+    const token = req.headers.authorization?.split(' ')[1];
+
+    if (!token) {
+        res.status(401).json({message: "Not Authorized"});
+    }
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        const user = await db.query('SELECT * FROM users WHERE id = $1', [decoded.id]);
+
+        res.json(user.rows[0]);
+    } catch(err) {
+        res.status(401).json({message: "Invalid or Expired Token"});
+    }
+});
